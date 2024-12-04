@@ -1,4 +1,5 @@
 from aocd import *
+import numpy as np
 
 lines = get_data(day=4, year=2024).split('\n')
 # lines = 'MMMSXXMASM\nMSAMXMSMSA\nAMXSXMAAMM\nMSAMASMSMX\nXMASAMXAMM\nXXAMMXXAMA\nSMSMSASXSS\nSAXAMASAAA\nMAMMMXMMMM\nMXMXAXMASX'.split('\n')
@@ -23,6 +24,12 @@ def get_words_in_all_dirs(inp, ln, row, col):
     return res
 
 
+def get_words_x(inp, ln, row, col):
+    ln_in_dir = int((ln - 1) / 2)
+    return [''.join([inp[row + x][col + x] for x in range(-1 * ln_in_dir, ln_in_dir + 1)]),
+            ''.join([inp[row - x][col + x] for x in range(-1 * ln_in_dir, ln_in_dir + 1)])]
+
+
 def count_words(inp, word):
     cnt = 0
     for row in range(len(inp)):
@@ -33,6 +40,23 @@ def count_words(inp, word):
     return cnt
 
 
+def count_x_words(inp, word):
+    cnt = 0
+    if len(word) % 2 != 0:
+        for row in range(1, len(inp) - 1):
+            for col in range(1, len(inp[row]) - 1):
+                if inp[row][col] == word[int((len(word)-1)/2)]:
+                    wrds_x = np.array(get_words_x(inp, len(word), row, col))
+                    cnt += np.all(np.logical_or(wrds_x == word, wrds_x == word[::-1]))
+        return int(cnt)
+    else:
+        print('Error: Length of word is not odd. You can\'t make X words with these.')
+        return 0
+
 ex1_res = count_words(lines, 'XMAS')
-print(ex1_res)
-submit(ex1_res, part='a', day=4, year=2024)
+# print(ex1_res)
+# submit(ex1_res, part='a', day=4, year=2024)
+
+ex2_res = count_x_words(lines, 'MAS')
+print(ex2_res)
+submit(ex2_res, part='b', day=4, year=2024)
