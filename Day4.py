@@ -54,8 +54,8 @@ def count_x_words(inp, word):
         return 0
 
 ex1_res = count_words(lines, 'XMAS')
-# print(ex1_res)
-# submit(ex1_res, part='a', day=4, year=2024)
+print(ex1_res)
+submit(ex1_res, part='a', day=4, year=2024)
 
 ex2_res = count_x_words(lines, 'MAS')
 print(ex2_res)
