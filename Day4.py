@@ -1,4 +1,5 @@
 from aocd import *
+from time import perf_counter
 import numpy as np
 
 lines = get_data(day=4, year=2024).split('\n')
@@ -53,10 +54,15 @@ def count_x_words(inp, word):
         print('Error: Length of word is not odd. You can\'t make X words with these.')
         return 0
 
+
+t1_start = perf_counter()
 ex1_res = count_words(lines, 'XMAS')
-print(ex1_res)
+t1_stop = perf_counter()
+print('Part A - Answer: ' + str(ex1_res) + ', calculated in ' + str((t1_stop - t1_start) * 1000) + ' ms')
 submit(ex1_res, part='a', day=4, year=2024)
 
+t2_start = perf_counter()
 ex2_res = count_x_words(lines, 'MAS')
-print(ex2_res)
+t2_stop = perf_counter()
+print('Part B - Answer: ' + str(ex2_res) + ', calculated in ' + str((t2_stop - t2_start) * 1000) + ' ms')
 submit(ex2_res, part='b', day=4, year=2024)

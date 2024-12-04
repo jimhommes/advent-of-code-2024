@@ -1,4 +1,5 @@
 from aocd import *
+from time import perf_counter
 import numpy as np
 import re
 
@@ -39,15 +40,22 @@ def validate(lst, min_diff, max_diff, dampener):
         return False
 
 
+t1_start = perf_counter()
 for line in data_input.split('\n'):
     numbers = np.array(re.findall(r'\d+', line)).astype(int)
     safe.append(validate(numbers, min_diff=1, max_diff=3, dampener=0))
-    safe_dampened.append(validate(numbers, min_diff=1, max_diff=3, dampener=1))
 
 ex1_res = sum(safe)
-print(ex1_res)
+t1_stop = perf_counter()
+print('Part A - Answer: ' + str(ex1_res) + ', calculated in ' + str((t1_stop - t1_start) * 1000) + ' ms')
 submit(ex1_res, part='a', day=2, year=2024)
 
+t2_start = perf_counter()
+for line in data_input.split('\n'):
+    numbers = np.array(re.findall(r'\d+', line)).astype(int)
+    safe_dampened.append(validate(numbers, min_diff=1, max_diff=3, dampener=1))
+
 ex2_res = sum(safe_dampened)
-print(ex2_res)
+t2_stop = perf_counter()
+print('Part B - Answer: ' + str(ex2_res) + ', calculated in ' + str((t2_stop - t2_start) * 1000) + ' ms')
 submit(ex2_res, part='b', day=2, year=2024)
