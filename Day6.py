@@ -1,144 +1,70 @@
 from aocd import *
 from time import perf_counter
+import networkx as nx
 
 
 class Board:
-
     def __init__(self, inp):
-        self.guard = None
+        self.board = nx.DiGraph()
+        self.matrix_ids = list()
+        self.id_counter = 1
         self.obstacles = []
+
         spl = inp.split('\n')
-        self.y_length = len(spl)
-        self.x_length = len(spl[0])
-        self.visited_coordinates_current = []
-        self.visited_coordinates_withoutdir = []
-        self.extra_obstacle_coords = []
-        self.move_counter = 0
+        for y in range(len(spl)):
+            self.matrix_ids.append([-1] * len(spl[0]))
+            for x in range(len(spl[0])):
+                if spl[y][x] == '#':
+                    self.add_obstacle(x, y)
+                elif spl[y][x] == '^' or spl[y][x] == '>' or spl[y][x] == 'v' or spl[y][x] == '<':
+                    self.guard = Guard(x, y, spl[y][x])
 
-        for row in range(len(spl)):
-            for col in range(len(spl[row])):
-                if spl[row][col] == '#':
-                    self.obstacles.append(Obstacle(row, col))
-                elif spl[row][col] == '^' or spl[row][col] == '>' or spl[row][col] == 'v' or spl[row][col] == '<':
-                    self.guard = Guard(spl[row][col], row, col)
-                    self.visited_coordinates_current.append((self.guard.x, self.guard.y, self.guard.x_dir, self.guard.y_dir))
-                    self.visited_coordinates_withoutdir.append((self.guard.x, self.guard.y))
+        self.add_edges()
 
-    def move(self):
-        self.move_counter += 1
-        print('Performing move ' + str(self.move_counter) + '/5670')
-        next_guard_position_x, next_guard_position_y = self.guard.peek_move()
-        if self.out_of_bounds(next_guard_position_x, next_guard_position_y):
-            return True
-        if self.in_obstacle(next_guard_position_x, next_guard_position_y):
-            self.guard.turn()
-            self.visited_coordinates_current.append((self.guard.x, self.guard.y, self.guard.x_dir, self.guard.y_dir))
-            return False
+    def add_obstacle(self, x, y):
+        if self.matrix_ids[y][x] == -1:
+            self.board.add_node(self.id_counter)
+            self.id_counter += 1
+            self.obstacles.append((x, y, self.id_counter))
+
+    def add_edges(self):
+        # Add guard edge to obstacle
+        if self.guard.x_dir == 0:
+            obstacles_on_guard_path = [(abs(i[1] - self.guard.y), i[3]) for i in self.obstacles if
+                                     i[0] == self.guard.x and i[1] > self.guard.y * self.guard.y_dir]
         else:
-            if self.guard_in_loop(next_guard_position_x, next_guard_position_y):
-                return True
-            else:
-                self.guard.move()
-                self.visited_coordinates_current.append(
-                    (self.guard.x, self.guard.y, self.guard.x_dir, self.guard.y_dir))
-                self.visited_coordinates_withoutdir.append((self.guard.x, self.guard.y))
-                return False
+            obstacles_on_guard_path = [(abs(i[0] - self.guard.x), i[3]) for i in self.obstacles if
+                                     i[1] == self.guard.y and i[0] > self.guard.x * self.guard.x_dir]
+        obstacles_on_guard_path.sort(key=lambda i: i[0])
+        self.board.add_edge(0, obstacles_on_guard_path[0][1], weight=obstacles_on_guard_path[0][0])
 
-    def guard_in_loop(self, next_x, next_y):
-        return (next_x, next_y, self.guard.x_dir, self.guard.y_dir) in self.visited_coordinates_current
-
-    def out_of_bounds(self, x, y):
-        return x < 0 or x >= self.x_length or y < 0 or y >= self.y_length
-
-    def in_obstacle(self, x, y):
-        return (x, y) in zip([obst.x for obst in self.obstacles], [obst.y for obst in self.obstacles])
-
-    def is_guard_in_loop_on_turn_right(self):
-        # print('--- Checking if guard is in loop')
-        clone_guard = self.guard.clone()
-        clone_visited_coordinates_current = [] + self.visited_coordinates_current
-        temp_obstacle_x, temp_obstacle_y = clone_guard.peek_move()
-        temp_obstacle = Obstacle(temp_obstacle_y, temp_obstacle_x)
-        self.obstacles.append(temp_obstacle)
-        clone_guard.turn()
-
-        while True:
-            next_clone_guard_position_x, next_clone_guard_position_y = clone_guard.peek_move()
-            if self.out_of_bounds(next_clone_guard_position_x, next_clone_guard_position_y):
-                self.obstacles.remove(temp_obstacle)
-                return False
-            if self.in_obstacle(next_clone_guard_position_x, next_clone_guard_position_y):
-                clone_guard.turn()
-            else:
-                if (next_clone_guard_position_x, next_clone_guard_position_y, clone_guard.x_dir, clone_guard.y_dir) in clone_visited_coordinates_current:
-                    self.obstacles.remove(temp_obstacle)
-                    self.extra_obstacle_coords.append((temp_obstacle_x, temp_obstacle_y))
-                    return True
-                else:
-                    clone_guard.move()
-                    clone_visited_coordinates_current.append((clone_guard.x, clone_guard.y, clone_guard.x_dir, clone_guard.y_dir))
+        # Add all edges between obstacles
+        for obstacle in self.obstacles:
+            pass #TODO
 
 
 class Guard:
-    def __init__(self, char, y, x):
-        self.y = int(y)
-        self.x = int(x)
-        if char == '^':
-            self.y_dir = -1
-            self.x_dir = 0
-        elif char == '>':
-            self.y_dir = 0
-            self.x_dir = 1
-        elif char == 'v':
-            self.y_dir = 1
-            self.x_dir = 0
-        elif char == '<':
-            self.y_dir = 0
-            self.x_dir = -1
-
-    def turn(self):
-        new_x_dir, new_y_dir = self.peek_turn()
-        self.x_dir = new_x_dir
-        self.y_dir = new_y_dir
-
-    def peek_move(self):
-        return self.x + self.x_dir, self.y + self.y_dir
-
-    def peek_turn(self):
-        if self.x_dir == 1:
-            return 0, 1
-        elif self.y_dir == 1:
-            return -1, 0
-        elif self.x_dir == -1:
-            return 0, -1
-        elif self.y_dir == -1:
-            return 1, 0
-
-    def move(self):
-        self.x += self.x_dir
-        self.y += self.y_dir
-
-    def clone(self):
-        res = Guard('^', self.y, self.x)
-        res.x_dir = self.x_dir
-        res.y_dir = self.y_dir
-        return res
-
-    def __repr__(self):
-        return 'G(' + str(self.x) + ',' + str(self.y) + ')'
-
-
-class Obstacle:
-    def __init__(self, y, x):
-        self.y = y
+    def __init__(self, x, y, guardchr):
         self.x = x
+        self.y = y
+        if guardchr == '^':
+            self.x_dir = 0
+            self.y_dir = -1
+        elif guardchr == 'v':
+            self.x_dir = 0
+            self.y_dir = 1
+        elif guardchr == '>':
+            self.x_dir = 1
+            self.y_dir = 0
+        elif guardchr == '<':
+            self.x_dir = -1
+            self.y_dir = 0
 
-    def __repr__(self):
-        return 'Obst(' + str(self.x) + ',' + str(self.y) + ')'
 
 
-data_input = get_data(day=6, year=2024)
-# data_input = '....#.....\n.........#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n......#...'
+
+# data_input = get_data(day=6, year=2024)
+data_input = '....#.....\n.........#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n......#...'
 
 t1_start = perf_counter()
 board = Board(data_input)
