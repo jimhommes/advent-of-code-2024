@@ -28,15 +28,16 @@ def rec_evaluate_ex2(res, curr_value, nmbr_lst):
         else:
             return res == concat_num(curr_value, nmbr_lst[0])
     else:
-        if rec_evaluate_ex1(res, curr_value + nmbr_lst[0], nmbr_lst[1:]):
+        if rec_evaluate_ex2(res, curr_value + nmbr_lst[0], nmbr_lst[1:]):
             return True
-        elif rec_evaluate_ex1(res, curr_value * nmbr_lst[0], nmbr_lst[1:]):
+        elif rec_evaluate_ex2(res, curr_value * nmbr_lst[0], nmbr_lst[1:]):
             return True
         else:
-            return rec_evaluate_ex1(res, concat_num(curr_value, nmbr_lst[0]), nmbr_lst[1:])
+            return rec_evaluate_ex2(res, concat_num(curr_value, nmbr_lst[0]), nmbr_lst[1:])
 
 
 data_input = get_data(day=7, year=2024)
+# data_input = '190: 10 19\n3267: 81 40 27\n83: 17 5\n156: 15 6\n7290: 6 8 6 15\n161011: 16 10 13\n192: 17 8 14\n21037: 9 7 18 13\n292: 11 6 16 20'
 
 ex1_res = 0
 t1_start = perf_counter()
